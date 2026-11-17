@@ -68,7 +68,7 @@ func (s *TestSuite) TestSearchByTitle_Substring() {
 	}
 }
 
-//  для проверки смешанного регистра
+// для проверки смешанного регистра
 func mixCase(s string) string {
 	runes := []rune(s)
 	for i := 0; i < len(runes); i++ {

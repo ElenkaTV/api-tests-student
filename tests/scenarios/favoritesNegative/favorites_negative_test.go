@@ -97,10 +97,10 @@ func (s *TestSuite) Test_AddDuplicateFavorite() {
 	rawSecond := favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
 	defer rawSecond.Body.Close()
 
-	// Ожидаем 409 
+	// Ожидаем 409
 	require.Equal(s.T(), http.StatusConflict, rawSecond.StatusCode, "Ожидался статус 409 при повторном добавлении")
 
-	// Убираем за собой 
+	// Убираем за собой
 	favorites.HttpRemoveFromFavorites(s.T(), s.tokenMain, s.adID)
 }
 
