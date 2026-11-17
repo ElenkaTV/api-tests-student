@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"api-tests-template/internal/managers/advertisements/models"
+
 	"github.com/stretchr/testify/assert"
 )
 

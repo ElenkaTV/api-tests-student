@@ -7,6 +7,7 @@ import (
 
 	"api-tests-template/internal/client/http/advertisements"
 	"api-tests-template/internal/managers/advertisements/models"
+
 	"github.com/stretchr/testify/require"
 )
 
