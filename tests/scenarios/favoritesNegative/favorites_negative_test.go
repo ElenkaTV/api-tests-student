@@ -84,7 +84,7 @@ func (s *TestSuite) Test_GetFavoritesWithoutAuth() {
 	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode, "Ожидался статус 401 без авторизации")
 }
 
-// 4. Повторное добавление одного и того же объявления (ожидаем 409 Conflict)
+// 4. Повторное добавление одного и того же объявления (ожидаем 409 )
 func (s *TestSuite) Test_AddDuplicateFavorite() {
 	// Сначала добавляем объявление в избранное
 	s.T().Log("Добавляем объявление в избранное (первый раз)")
@@ -97,10 +97,10 @@ func (s *TestSuite) Test_AddDuplicateFavorite() {
 	rawSecond := favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
 	defer rawSecond.Body.Close()
 
-	// Ожидаем 409 Conflict
+	// Ожидаем 409 
 	require.Equal(s.T(), http.StatusConflict, rawSecond.StatusCode, "Ожидался статус 409 при повторном добавлении")
 
-	// Убираем за собой (чтобы не мешать другим тестам)
+	// Убираем за собой 
 	favorites.HttpRemoveFromFavorites(s.T(), s.tokenMain, s.adID)
 }
 
