@@ -2,6 +2,7 @@ package advertisementCreate
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 
 	"api-tests-template/internal/client/http/advertisements"
@@ -31,9 +32,13 @@ func (s *TestSuite) SetupSuite() {
 	authData := auth.Login(s.T(), login, pass)
 	s.token = authData.Token
 
+	s.T().Log("Читаем тестовую картинку из файла")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки: %s", photoPath)
+
 	s.T().Log("Создаем тестовое объявление")
-	fakePhoto := []byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46}
-	resp := advManager.CreateAdvertisement(s.T(), s.token, "Тестовое объявление для лабы", "Полное описание", 1000, 2, fakePhoto, "test.jpg")
+	resp := advManager.CreateAdvertisement(s.T(), s.token, "Тестовое объявление для лабы", "Полное описание", 1000, 2, photoBytes, "test.jpg")
 	s.adID = resp.ID
 	require.NotEmpty(s.T(), s.adID)
 }
