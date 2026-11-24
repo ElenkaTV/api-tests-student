@@ -25,11 +25,12 @@ go mod tidy
 
 В файле .env.override (создайте его в корне, если нет) выставьте правильные значения для переменных окружения:
 
-TEST_LOGIN=sfme2013@ya.ru
-TEST_PASSWORD=906307Zz
-TEST_LOGIN_2=elenkainst@ya.ru
-TEST_PASSWORD_2=123456Adm
+TEST_LOGIN=your_login
+TEST_PASSWORD=your_password
+TEST_LOGIN_2=your_second_login
+TEST_PASSWORD_2=your_second_password
 API_URL=https://testboard.avito.com/api/v1
+DEBUG=true
 
 Для запуска всех тестов достаточно выполнить команду в корне проекта:
 

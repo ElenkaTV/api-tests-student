@@ -1,13 +1,17 @@
 package favoritesNegative
 
 import (
+	"encoding/json"
+	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"api-tests-template/internal/client/http/advertisements"
 	"api-tests-template/internal/client/http/favorites"
 	advManager "api-tests-template/internal/managers/advertisements"
+	"api-tests-template/internal/managers/advertisements/models"
 	"api-tests-template/internal/managers/auth"
 	"api-tests-template/internal/utils"
 
@@ -22,6 +26,7 @@ type TestSuite struct {
 	adID         string
 }
 
+// SetupSuite подготавливает окружение: логин двух пользователей и создание объявления
 func (s *TestSuite) SetupSuite() {
 	utils.LoadEnv()
 	os.Setenv("API_URL", "https://testboard.avito.com/api/v1")
@@ -31,79 +36,97 @@ func (s *TestSuite) SetupSuite() {
 	loginCreator := os.Getenv("TEST_LOGIN_2")
 	passCreator := os.Getenv("TEST_PASSWORD_2")
 
-	require.NotEmpty(s.T(), loginMain, "TEST_LOGIN не задан в .env.override")
-	require.NotEmpty(s.T(), loginCreator, "TEST_LOGIN_2 не задан в .env.override")
+	require.NotEmpty(s.T(), loginMain, "TEST_LOGIN не задан")
+	require.NotEmpty(s.T(), loginCreator, "TEST_LOGIN_2 не задан")
 
-	s.T().Log("Логинимся под основным пользователем")
 	authMain := auth.Login(s.T(), loginMain, passMain)
 	s.tokenMain = authMain.Token
 
-	s.T().Log("Логинимся под вторым пользователем (создатель)")
 	authCreator := auth.Login(s.T(), loginCreator, passCreator)
 	s.tokenCreator = authCreator.Token
 
-	// Создаем объявление от второго пользователя
+	s.T().Log("Читаем тестовую картинку из файла")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки: %s", photoPath)
+
 	s.T().Log("Создаем объявление для тестов")
-	fakePhoto := []byte{0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46}
-	resp := advManager.CreateAdvertisement(s.T(), s.tokenCreator, "Объявление для негативных тестов", "Описание", 500, 1, fakePhoto, "test.jpg")
+	resp := advManager.CreateAdvertisement(s.T(), s.tokenCreator, "Объявление для негативных тестов", "Описание", 500, 1, photoBytes, "test.jpg")
 	s.adID = resp.ID
 	require.NotEmpty(s.T(), s.adID)
 }
 
+// TearDownSuite удаляет тестовое объявление после завершения тестов
 func (s *TestSuite) TearDownSuite() {
 	if s.adID != "" {
-		s.T().Log("Удаляем тестовое объявление")
 		advertisements.HttpDeleteAdvertisement(s.T(), s.tokenCreator, s.adID)
 	}
 }
 
-// 1. Добавление в избранное несуществующего ad_id (ожидаем 404)
+// Test_AddNonExistentFavorite проверяет ошибку 404 при добавлении несуществующего объявления
 func (s *TestSuite) Test_AddNonExistentFavorite() {
-	// Используем валидный по формату, но несуществующий UUID
 	nonExistentID := "11111111-1111-1111-1111-111111111111"
 	raw := favorites.HttpAddToFavorites(s.T(), s.tokenMain, nonExistentID)
 	defer raw.Body.Close()
 
-	require.Equal(s.T(), http.StatusNotFound, raw.StatusCode, "Ожидался статус 404 для несуществующего ad_id")
+	require.Equal(s.T(), http.StatusNotFound, raw.StatusCode)
+	body, _ := io.ReadAll(raw.Body)
+	var errResp models.ErrorResponse
+	_ = json.Unmarshal(body, &errResp)
+	require.Equal(s.T(), "not_found", errResp.Error)
 }
 
-// 2. Удаление из избранного несуществующего ad_id (ожидаем 404)
+// Test_RemoveNonExistentFavorite проверяет ошибку 404 при удалении несуществующего объявления
 func (s *TestSuite) Test_RemoveNonExistentFavorite() {
 	nonExistentID := "11111111-1111-1111-1111-111111111111"
 	raw := favorites.HttpRemoveFromFavorites(s.T(), s.tokenMain, nonExistentID)
 	defer raw.Body.Close()
 
-	require.Equal(s.T(), http.StatusNotFound, raw.StatusCode, "Ожидался статус 404 при удалении несуществующего ad_id")
+	require.Equal(s.T(), http.StatusNotFound, raw.StatusCode)
+	body, _ := io.ReadAll(raw.Body)
+	var errResp models.ErrorResponse
+	_ = json.Unmarshal(body, &errResp)
+	require.Equal(s.T(), "not_found", errResp.Error)
 }
 
-// 3. Запрос без авторизации на получение избранного (ожидаем 401)
+// Test_GetFavoritesWithoutAuth проверяет ошибку 401 без авторизации
 func (s *TestSuite) Test_GetFavoritesWithoutAuth() {
 	raw := favorites.HttpGetFavorites(s.T(), "")
 	defer raw.Body.Close()
-
-	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode, "Ожидался статус 401 без авторизации")
+	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode)
 }
 
-// 4. Повторное добавление одного и того же объявления (ожидаем 409 )
+// Test_AddFavoriteWithoutAuth проверяет ошибку 401 при добавлении в избранное без авторизации
+func (s *TestSuite) Test_AddFavoriteWithoutAuth() {
+	raw := favorites.HttpAddToFavorites(s.T(), "", s.adID)
+	defer raw.Body.Close()
+	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode)
+}
+
+// Test_RemoveFavoriteWithoutAuth проверяет ошибку 401 при удалении из избранного без авторизации
+func (s *TestSuite) Test_RemoveFavoriteWithoutAuth() {
+	raw := favorites.HttpRemoveFromFavorites(s.T(), "", s.adID)
+	defer raw.Body.Close()
+	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode)
+}
+
+// Test_AddDuplicateFavorite проверяет ошибку 409 при повторном добавлении в избранное
 func (s *TestSuite) Test_AddDuplicateFavorite() {
-	// Сначала добавляем объявление в избранное
-	s.T().Log("Добавляем объявление в избранное (первый раз)")
-	rawFirst := favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
-	defer rawFirst.Body.Close()
-	require.Equal(s.T(), http.StatusCreated, rawFirst.StatusCode, "Не удалось добавить в избранное (первый раз)")
+	favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
 
-	// Пытаемся добавить его же еще раз
-	s.T().Log("Пытаемся добавить то же объявление в избранное (второй раз)")
-	rawSecond := favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
-	defer rawSecond.Body.Close()
+	raw := favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
+	defer raw.Body.Close()
+	require.Equal(s.T(), http.StatusConflict, raw.StatusCode)
 
-	// Ожидаем 409
-	require.Equal(s.T(), http.StatusConflict, rawSecond.StatusCode, "Ожидался статус 409 при повторном добавлении")
+	body, _ := io.ReadAll(raw.Body)
+	var errResp models.ErrorResponse
+	_ = json.Unmarshal(body, &errResp)
+	require.Equal(s.T(), "already_exists", errResp.Error)
 
-	// Убираем за собой
 	favorites.HttpRemoveFromFavorites(s.T(), s.tokenMain, s.adID)
 }
 
+// TestFavoritesNegativeSuite запускает набор негативных тестов
 func TestFavoritesNegativeSuite(t *testing.T) {
 	suite.Run(t, new(TestSuite))
 }

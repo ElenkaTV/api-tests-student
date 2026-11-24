@@ -17,15 +17,15 @@ func HttpAddToFavorites(t *testing.T, token, adID string) *http.Response {
 		End().Response
 }
 
-// HttpGetFavorites получает список избранного
+// HttpGetFavorites получает список избранного пользователя
 func HttpGetFavorites(t *testing.T, token string) *http.Response {
 	return apiRunner.GetRunner().Auth(token).Create().
 		Get(path.FavoritesPath).
 		Expect(t).
-		End().Response // Убрали Status(http.StatusOK)
+		End().Response
 }
 
-// HttpRemoveFromFavorites удаляет из избранного по ID объявления
+// HttpRemoveFromFavorites удаляет объявление из избранного
 func HttpRemoveFromFavorites(t *testing.T, token, adID string) *http.Response {
 	return apiRunner.GetRunner().Auth(token).Create().
 		Delete(path.FavoritesPath + "/" + adID).

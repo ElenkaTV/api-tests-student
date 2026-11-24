@@ -11,12 +11,11 @@ import (
 	apiRunner "api-tests-template/internal/helpers/api-runner"
 )
 
-// HttpCreateAdvertisement создает объявление с фото
+// HttpCreateAdvertisement создает объявление с фотографиями
 func HttpCreateAdvertisement(t *testing.T, token, title, description string, price float64, quantity int, photoBytes []byte, photoName string) *http.Response {
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
 
-	// Добавляем текстовые поля
 	_ = writer.WriteField("title", title)
 	_ = writer.WriteField("description", description)
 	if price > 0 {
@@ -26,7 +25,6 @@ func HttpCreateAdvertisement(t *testing.T, token, title, description string, pri
 		_ = writer.WriteField("quantity", strconv.Itoa(quantity))
 	}
 
-	// Добавляем файл
 	if len(photoBytes) > 0 {
 		part, _ := writer.CreateFormFile("photos", photoName)
 		_, _ = part.Write(photoBytes)
@@ -38,10 +36,10 @@ func HttpCreateAdvertisement(t *testing.T, token, title, description string, pri
 		Header("Content-Type", writer.FormDataContentType()).
 		Body(body.String()).
 		Expect(t).
-		End().Response // Убрали Status(http.StatusCreated)
+		End().Response
 }
 
-// HttpGetAdvertisementByID получает объявление по ID (ID в query!)
+// HttpGetAdvertisementByID получает объявление по его ID
 func HttpGetAdvertisementByID(t *testing.T, id string) *http.Response {
 	return apiRunner.GetRunner().Create().
 		Get(path.AdvertisementPath).
@@ -51,7 +49,7 @@ func HttpGetAdvertisementByID(t *testing.T, id string) *http.Response {
 		End().Response
 }
 
-// HttpDeleteAdvertisement удаляет объявление по ID (ID в query!)
+// HttpDeleteAdvertisement удаляет объявление по его ID
 func HttpDeleteAdvertisement(t *testing.T, token, id string) *http.Response {
 	return apiRunner.GetRunner().Auth(token).Create().
 		Delete(path.AdvertisementPath).

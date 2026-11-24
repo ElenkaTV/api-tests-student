@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// GetFavoritesList возвращает список избранного
+// GetFavoritesList получает список избранного пользователя и возвращает его модель
 func GetFavoritesList(t *testing.T, token string) models.FavoritesList {
 	raw := favorites.HttpGetFavorites(t, token)
 	defer raw.Body.Close()

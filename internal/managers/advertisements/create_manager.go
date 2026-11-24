@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// CreateAdvertisement создает объявление и возвращает ответ
+// CreateAdvertisement создает объявление и возвращает ответ с его ID
 func CreateAdvertisement(t *testing.T, token, title, desc string, price float64, quantity int, photoBytes []byte, photoName string) models.CreateAdvertisementResponse {
 	raw := advertisements.HttpCreateAdvertisement(t, token, title, desc, price, quantity, photoBytes, photoName)
 	defer raw.Body.Close()
@@ -24,7 +24,7 @@ func CreateAdvertisement(t *testing.T, token, title, desc string, price float64,
 	return resp
 }
 
-// GetAdvertisementByID возвращает объявление по ID
+// GetAdvertisementByID получает объявление по ID и возвращает его модель
 func GetAdvertisementByID(t *testing.T, id string) models.AdvertisementResponse {
 	raw := advertisements.HttpGetAdvertisementByID(t, id)
 	defer raw.Body.Close()
