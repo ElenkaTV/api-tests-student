@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -36,8 +37,11 @@ func (s *TestSuite) SetupSuite() {
 
 // Test_CreateWithoutTitle проверяет ошибку 400 при создании объявления без title
 func (s *TestSuite) Test_CreateWithoutTitle() {
-	fakePhoto := []byte{0xFF, 0xD8}
-	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, "", "Описание", 1000, 1, fakePhoto, "test.jpg")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки")
+
+	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, "", "Описание", 1000, 1, photoBytes, "test.jpg")
 	defer raw.Body.Close()
 
 	require.Equal(s.T(), http.StatusBadRequest, raw.StatusCode)
@@ -50,8 +54,11 @@ func (s *TestSuite) Test_CreateWithoutTitle() {
 
 // Test_CreateWithEmptyDescription проверяет ошибку 400 при создании объявления с пустым description
 func (s *TestSuite) Test_CreateWithEmptyDescription() {
-	fakePhoto := []byte{0xFF, 0xD8}
-	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, "Тест", "", 1000, 1, fakePhoto, "test.jpg")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки")
+
+	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, "Тест", "", 1000, 1, photoBytes, "test.jpg")
 	defer raw.Body.Close()
 
 	require.Equal(s.T(), http.StatusBadRequest, raw.StatusCode)
@@ -64,8 +71,11 @@ func (s *TestSuite) Test_CreateWithEmptyDescription() {
 // Test_CreateWithLongTitle проверяет ошибку 400 при слишком длинном title
 func (s *TestSuite) Test_CreateWithLongTitle() {
 	longTitle := strings.Repeat("A", 300)
-	fakePhoto := []byte{0xFF, 0xD8}
-	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, longTitle, "Описание", 1000, 1, fakePhoto, "test.jpg")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки")
+
+	raw := advertisements.HttpCreateAdvertisement(s.T(), s.token, longTitle, "Описание", 1000, 1, photoBytes, "test.jpg")
 	defer raw.Body.Close()
 
 	require.Equal(s.T(), http.StatusBadRequest, raw.StatusCode)
@@ -77,8 +87,11 @@ func (s *TestSuite) Test_CreateWithLongTitle() {
 
 // Test_CreateWithoutAuth проверяет ошибку 401 при создании без авторизации
 func (s *TestSuite) Test_CreateWithoutAuth() {
-	fakePhoto := []byte{0xFF, 0xD8}
-	raw := advertisements.HttpCreateAdvertisement(s.T(), "", "Тест", "Описание", 1000, 1, fakePhoto, "test.jpg")
+	photoPath := filepath.Join("..", "..", "testdata", "test.jpg")
+	photoBytes, err := os.ReadFile(photoPath)
+	require.NoError(s.T(), err, "Не удалось прочитать файл картинки")
+
+	raw := advertisements.HttpCreateAdvertisement(s.T(), "", "Тест", "Описание", 1000, 1, photoBytes, "test.jpg")
 	defer raw.Body.Close()
 
 	require.Equal(s.T(), http.StatusUnauthorized, raw.StatusCode)
