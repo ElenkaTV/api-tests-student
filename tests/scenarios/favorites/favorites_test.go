@@ -43,7 +43,7 @@ func (s *TestSuite) SetupSuite() {
 	s.tokenCreator = authCreator.Token
 }
 
-// SetupTest создает новое объявление перед каждым тестом (чтобы тесты не зависели друг от друга)
+// SetupTest создает новое объявление перед каждым тестом
 func (s *TestSuite) SetupTest() {
 	s.T().Log("Создаем объявление для текущего теста")
 
@@ -59,6 +59,7 @@ func (s *TestSuite) SetupTest() {
 // TearDownTest удаляет объявление после каждого теста
 func (s *TestSuite) TearDownTest() {
 	if s.adID != "" {
+		// ВРЕМЕННО ЗАКОММЕНТИРОВАНО, ЧТОБЫ ОБЪЯВЛЕНИЕ ОСТАЛОСЬ НА САЙТЕ
 		advertisements.HttpDeleteAdvertisement(s.T(), s.tokenCreator, s.adID)
 		s.adID = ""
 	}
@@ -96,6 +97,7 @@ func (s *TestSuite) Test_DeleteAdvertisementRemovesFromFavorites() {
 	favorites.HttpAddToFavorites(s.T(), s.tokenMain, s.adID)
 
 	s.T().Log("Удаляем само объявление от лица владельца")
+	// ВРЕМЕННО ЗАКОММЕНТИРОВАНО, ЧТОБЫ ОБЪЯВЛЕНИЕ ОСТАЛОСЬ НА САЙТЕ
 	advertisements.HttpDeleteAdvertisement(s.T(), s.tokenCreator, s.adID)
 
 	s.T().Log("Проверяем, что объявление пропало из избранного")
